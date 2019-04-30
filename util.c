@@ -56,7 +56,7 @@ void printToken(TokenType token, const char *tokenString)
 	}
 }
 
-TreeNode *newStmtNode(StmtKind kind)
+TreeNode * newFuncNode()
 {
 	TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
 	int i;
@@ -66,6 +66,66 @@ TreeNode *newStmtNode(StmtKind kind)
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
+		t->op = 0;
+		t->name = NULL;
+		t->val = 0;
+		t->nodekind = FuncK;
+		t->lineno = lineno;
+	}
+	return t; 
+}
+
+TreeNode * newDeclareNode()
+{
+	TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+	int i;
+	if (t == NULL)
+		fprintf(listing, "Out of memory error at line %d\n",lineno);
+	else{
+		for (i=0;i<MAXCHILDREN;i++)
+			t->child[i] = NULL;
+		t->sibling = NULL;
+		t->op = 0;
+		t->name = NULL;
+		t->val = 0;
+		t->nodekind = DeclareK;
+		t->lineno = lineno;
+	}
+	return t; 
+}
+
+TreeNode * newParamNode()
+{
+	TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+	int i;
+	if (t == NULL)
+		fprintf(listing, "Out of memory error at line %d\n",lineno);
+	else{
+		for (i=0;i<MAXCHILDREN;i++)
+			t->child[i] = NULL;
+		t->sibling = NULL;
+		t->op = 0;
+		t->name = NULL;
+		t->val = 0;
+		t->nodekind = ParamK;
+		t->lineno = lineno;
+	}
+	return t;
+}
+
+TreeNode * newStmtNode(StmtKind kind)
+{
+	TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+	int i;
+	if (t == NULL)
+		fprintf(listing, "Out of memory error at line %d\n",lineno);
+	else{
+		for (i=0;i<MAXCHILDREN;i++)
+			t->child[i] = NULL;
+		t->sibling = NULL;
+		t->op = 0;
+		t->name = NULL;
+		t->val = 0;
 		t->nodekind = StmtK;
 		t->kind.stmt = kind;
 		t->lineno = lineno;
@@ -73,7 +133,7 @@ TreeNode *newStmtNode(StmtKind kind)
 	return t;
 }
 
-TreeNode *newExpNode(ExpKind kind)
+TreeNode * newFactorNode(FactorKind kind)
 {
 	TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
 	int i;
@@ -83,10 +143,12 @@ TreeNode *newExpNode(ExpKind kind)
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->nodekind = ExpK;
-		t->kind.stmt = kind;
+		t->op = 0;
+		t->name = NULL;
+		t->val = 0;
+		t->nodekind = FactorK;
+		t->kind.factor = kind;
 		t->lineno = lineno;
-		t->type = Void;
 	}
 	return t;
 }

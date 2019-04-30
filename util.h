@@ -3,9 +3,15 @@
 
 void printToken(TokenType, const char* );
 
-TreeNode * newStmtnode(StmtKind);
+TreeNode * newFuncNode();
 
-TreeNode * newExpNode(ExpKind);
+TreeNode * newDeclareNode();
+
+TreeNode * newParamNode();
+
+TreeNode * newStmtNode(StmtKind);
+
+TreeNode * newFactorNode(FactorKind);
 
 char * copyString(char *);
 

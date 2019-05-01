@@ -5,25 +5,39 @@
 #include "scan.h"
 #include "parse.h"
 #include "tiny.tab.h"
+#include "string.h"
+#define MAXSTACKSIZE 1000
 
-static char * savedName;
-static int savedLineNo;
 static TreeNode * savedTree;
 static int yylex(void);
 int yyerror(char * message);
 TreeNode * parse(void);
 
-#define SAVE_ID_NO do{ \
-			savedName = copyString(tokenString);\
-			savedLineNo = lineno; }while(0)
+typedef struct ID_ELEMENT{
+	char *name;
+	int lineno;
+}ID_ELEMENT;
+static ID_ELEMENT Stack[MAXSTACKSIZE];
+static int top = -1;
+static int savedNum = 0;
+#define PUSH_STACK(x, y) do{\
+	Stack[++top].name = copyString((x));\
+	Stack[top].lineno = (y);\
+	}while(0)
+
+#define POP_STACK(x, y) do{\
+	(x) = Stack[top].name;\
+	(y) = Stack[top--].lineno;\
+	}while(0)
 
 %}
 %start program
-%token ERROR COMERR
+%token NONE ERROR COMERR
 %token IF ELSE RETURN WHILE
 %token INT VOID INTARR
 %token ID NUM
-%token ASSIGN EQ NEQ LT LEQ GT GEQ PLUS MINUS TIMES DIVIDE
+%token ASSIGN EQ NEQ LT LEQ GT GEQ
+%token PLUS MINUS TIMES DIVIDE
 %token LPAREN RPAREN LCB RCB LSB RSB COMMA SEMI
 %define parse.trace
 %%
@@ -45,33 +59,29 @@ declaration_list	: declaration_list declaration
 declaration			: var_declaration { $$ = $1; }
 					| fun_declaration { $$ = $1; }
 					;
-var_declaration		: type_specifier ID{ SAVE_ID_NO;}
-					  SEMI
+var_declaration		: type_specifier identifier SEMI
 						{	$$ = newDeclareNode();
 							$$->op = $1;
-							$$->name = savedName;
-							$$->lineno = savedLineNo;
+							POP_STACK($$->name, $$->lineno);
+
 						}
-					| type_specifier ID{ SAVE_ID_NO; }
-					  LSB NUM RSB SEMI
+					| type_specifier identifier LSB NUM {savedNum = atoi(tokenString);}
+					  RSB SEMI
 						{	$$ = newDeclareNode();
-							$$->op = $1;
-							$$->name = savedName;
-							$$->val = $4;
-							$$->lineno = savedLineNo;
+							$$->op = INTARR;
+							$$->val =savedNum;
+							POP_STACK($$->name, $$->lineno);
 						}
 					;
 type_specifier		: INT { $$ = INT;}
 					| VOID { $$ = VOID;}
 					;
-fun_declaration		: type_specifier ID{ SAVE_ID_NO; }
-					  LPAREN params RPAREN compound_stmt
+fun_declaration		: type_specifier identifier LPAREN params RPAREN compound_stmt
 						{	$$ = newFuncNode();
 							$$->op = $1;
-							$$->name = savedName;
 							$$->child[0] = $4;
 							$$->child[1] = $6;
-							$$->lineno = savedLineNo;
+							POP_STACK($$->name, $$->lineno);
 						}
 					;
 params				: param_list { $$ = $1; }
@@ -89,19 +99,15 @@ param_list			: param_list COMMA param
 						}
 					| param { $$ = $1; }
 					;
-param				: type_specifier ID
+param				: type_specifier identifier 
 						{	$$ = newParamNode();
 							$$->op = $1;
-							$$->name = copyString(tokenString);
-							$$->lineno = lineno;
+							POP_STACK($$->name, $$->lineno);
 						}
-					| type_specifier ID{ SAVE_ID_NO; }
-					  LSB RSB
+					| type_specifier identifier LSB RSB
 						{	$$ = newParamNode();
-							$$->op = $1;
-							$$->name = savedName;
-							$$->val = 1;	//declare array parameter
-							$$->lineno = savedLineNo;
+							$$->op = INTARR;
+							POP_STACK($$->name, $$->lineno);
 						}
 					;
 compound_stmt		: LCB local_declarations statement_list RCB
@@ -167,20 +173,16 @@ return_stmt			: RETURN SEMI { $$ = newStmtNode(ReturnK);}
 expression			: var ASSIGN expression
 						{	$$ = newStmtNode(ExpK);
 							$$->child[0] = $1;
-							$$->op = EQ;
+							$$->op = ASSIGN;
 							$$->child[1] = $3;
 						}
 					| simple_expression{ $$ = $1; }
 					;
-var					: ID { $$ = newFactorNode(IdK);
-						   $$->name = copyString(tokenString);
-						   $$->lineno = lineno;
-					  	 }
-					| ID {SAVE_ID_NO;}
-					  LSB expression RSB
+var					: identifier{ $$ = newFactorNode(IdK); POP_STACK($$->name, $$->lineno);}
+					| identifier LSB expression RSB
 						{	$$ = newFactorNode(ArrK);
-							$$->name = savedName;
-							$$->lineno = savedLineNo;
+							$$->child[0] = $3;
+							POP_STACK($$->name, $$->lineno);
 						}
 					;
 simple_expression	: additive_expression relop additive_expression
@@ -225,12 +227,10 @@ factor				: LPAREN expression RPAREN { $$ = $2;}
 					| call {$$ = $1;}
 					| NUM {$$ = newFactorNode(ConstK); $$->val = atoi(tokenString);}
 					;
-call				: ID { SAVE_ID_NO;}	  
-					  LPAREN args RPAREN
+call				: identifier LPAREN args RPAREN
 						{	$$ = newCallNode();
-							$$->name = savedName;
 							$$->child[0] = $3;
-							$$->lineno = savedLineNo;
+							POP_STACK($$->name, $$->lineno);
 						}
 args				: arg_list { $$ = $1;}
 					| %empty { $$ = NULL;}
@@ -246,6 +246,8 @@ arg_list			: arg_list COMMA expression
 							else $$ = $3;
 						}
 					| expression { $$ = $1;}
+					;
+identifier			: ID{PUSH_STACK(tokenString,lineno);}
 					;
 					
 %%
@@ -267,3 +269,4 @@ TreeNode * parse(void)
 	yyparse();
 	return savedTree;
 }
+

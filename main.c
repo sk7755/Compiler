@@ -24,7 +24,7 @@ FILE *listing;
 FILE *code;
 
 int EchoSource = TRUE;
-int TraceScan = TRUE;
+int TraceScan = FALSE;
 int TraceParse = TRUE;
 int TraceAnalyze = TRUE;
 int TraceCode = TRUE;

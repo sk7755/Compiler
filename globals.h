@@ -7,7 +7,7 @@
 #include <string.h>
 
 #ifndef YYPARSER
-#include "y.tab.h"
+#include "tiny.tab.h"
 #define ENDFILE 0
 
 #endif
@@ -22,15 +22,8 @@
 
 #define MAXRESERVED 8
 
-/*
-typedef enum
-	{ENDFILE,ERROR,COMERR,
-	IF,ELSE,INT,RETURN,VOID,WHILE,
-	ID,NUM,
-	ASSIGN,EQ,NEQ,LT,LEQ,GT,GEQ,PLUS,MINUS,TIMES,DIVIDE,
-	LPAREN,RPAREN,LCB,RCB,LSB,RSB,COMMA,SEMI,
-	}TokenType;
-*/
+#define YYSTYPE TreeNode *
+
 typedef int TokenType;
 
 extern FILE* source;
@@ -40,7 +33,7 @@ extern FILE* code;
 extern int lineno;
 
 //Syntax tree for Parsing
-typedef enum {FuncK, DeclareK,ParamK, StmtK, FactorK} NodeKind;
+typedef enum {FuncK, DeclareK,ParamK, StmtK, FactorK, CallK} NodeKind;
 typedef enum {IfK, WhileK, ReturnK, CompoundK, ExpK} StmtKind;
 typedef enum {IdK, ArrK, ConstK} FactorKind;
 

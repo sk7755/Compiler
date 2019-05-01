@@ -1,8 +1,9 @@
 %{
+
 #include "globals.h"
 #include "util.h"
 #include "scan.h"
-
+#include "tiny.tab.h"
 char tokenString[MAXTOKENLEN+1];
 %}
 

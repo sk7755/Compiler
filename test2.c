@@ -1,10 +1,1 @@
-/* comment /* asdf *****/
-
-/* com **
-
-   /
-
-
-   ment*/
-
-/*commerrorb /*
+int x[10];

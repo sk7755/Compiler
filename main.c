@@ -1,10 +1,9 @@
 #include "globals.h"
-#define NO_PARSE TRUE
+#define NO_PARSE FALSE
 
+#define NO_ANALYZE TRUE
 
-#define NO_ANALYZE FALSE
-
-#define NO_CODE FALSE
+#define NO_CODE TRUE
 
 #include "util.h"
 #if NO_PARSE
@@ -58,7 +57,10 @@ int main( int argc, char *argv[])
 		;
 	
 #else
+	extern int yydebug;
+	yydebug = 0;
 	syntaxTree = parse();
+	
 	if(TraceParse){
 		fprintf(listing, "\nSyntax tree:\n");
 		printTree(syntaxTree);

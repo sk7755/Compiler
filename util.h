@@ -1,7 +1,9 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
-void printToken(TokenType, const char* );
+#include "globals.h"
+
+void printToken(TokenType token, const char *tokenString);
 
 TreeNode * newFuncNode();
 
@@ -9,9 +11,11 @@ TreeNode * newDeclareNode();
 
 TreeNode * newParamNode();
 
-TreeNode * newStmtNode(StmtKind);
+TreeNode * newStmtNode(StmtKind kind);
 
-TreeNode * newFactorNode(FactorKind);
+TreeNode * newFactorNode(FactorKind kind);
+
+TreeNode * newCallNode();
 
 char * copyString(char *);
 

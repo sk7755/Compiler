@@ -61,7 +61,7 @@ declaration			: var_declaration { $$ = $1; }
 					;
 var_declaration		: type_specifier identifier SEMI
 						{	$$ = newDeclareNode();
-							$$->op = $1;
+							$$->op = (TokenType)(long)$1;
 							POP_STACK($$->name, $$->lineno);
 
 						}
@@ -73,12 +73,12 @@ var_declaration		: type_specifier identifier SEMI
 							POP_STACK($$->name, $$->lineno);
 						}
 					;
-type_specifier		: INT { $$ = INT;}
-					| VOID { $$ = VOID;}
+type_specifier		: INT { $$ = (YYSTYPE)INT;}
+					| VOID { $$ = (YYSTYPE)VOID;}
 					;
 fun_declaration		: type_specifier identifier LPAREN params RPAREN compound_stmt
 						{	$$ = newFuncNode();
-							$$->op = $1;
+							$$->op = (TokenType)(long)$1;
 							$$->child[0] = $4;
 							$$->child[1] = $6;
 							POP_STACK($$->name, $$->lineno);
@@ -101,7 +101,7 @@ param_list			: param_list COMMA param
 					;
 param				: type_specifier identifier 
 						{	$$ = newParamNode();
-							$$->op = $1;
+							$$->op = (TokenType)(long)$1;
 							POP_STACK($$->name, $$->lineno);
 						}
 					| type_specifier identifier LSB RSB
@@ -188,39 +188,39 @@ var					: identifier{ $$ = newFactorNode(IdK); POP_STACK($$->name, $$->lineno);}
 simple_expression	: additive_expression relop additive_expression
 						{	$$ = newStmtNode(ExpK);
 							$$->child[0] = $1;
-							$$->op = $2;
+							$$->op = (TokenType)(long)$2;
 							$$->child[1] = $3;
 						}
 					| additive_expression { $$ = $1;}
 					;
-relop				: LEQ { $$ = LEQ;}
-					| LT { $$ = LT;}
-					| GT { $$ = GT;}
-					| GEQ { $$ = GEQ;}
-					| EQ { $$ = EQ;}
-					| NEQ { $$ = NEQ;}
+relop				: LEQ { $$ = (YYSTYPE)LEQ;}
+					| LT { $$ = (YYSTYPE)LT;}
+					| GT { $$ = (YYSTYPE)GT;}
+					| GEQ { $$ = (YYSTYPE)GEQ;}
+					| EQ { $$ = (YYSTYPE)EQ;}
+					| NEQ { $$ = (YYSTYPE)NEQ;}
 					;
 additive_expression	: additive_expression addop term
 						{	$$ = newStmtNode(ExpK);
 							$$->child[0] = $1;
-							$$->op = $2;
+							$$->op = (TokenType)(long)$2;
 							$$->child[1] = $3;
 						}
 					| term { $$ = $1; }
 					;
-addop				: PLUS { $$ = PLUS; }
-					| MINUS { $$ = MINUS; }
+addop				: PLUS { $$ = (YYSTYPE)PLUS; }
+					| MINUS { $$ = (YYSTYPE)MINUS; }
 					;
 term				: term mulop factor 
 						{	$$ = newStmtNode(ExpK);
 							$$->child[0] = $1;
-							$$->op = $2;
+							$$->op = (TokenType)(long)$2;
 							$$->child[1] = $3;
 						}
 					| factor { $$ = $1;}
 					;
-mulop				: TIMES { $$ = TIMES;}
-					| DIVIDE { $$ = DIVIDE;}
+mulop				: TIMES { $$ = (YYSTYPE)TIMES;}
+					| DIVIDE { $$ = (YYSTYPE)DIVIDE;}
 					;
 factor				: LPAREN expression RPAREN { $$ = $2;}
 					| var {$$ = $1;}

@@ -4,7 +4,7 @@
 #include "util.h"
 #include "scan.h"
 #include "parse.h"
-#include "tiny.tab.h"
+#include "cminus.tab.h"
 #include "string.h"
 #define MAXSTACKSIZE 1000
 
@@ -39,6 +39,8 @@ static int savedNum = 0;
 %token ASSIGN EQ NEQ LT LEQ GT GEQ
 %token PLUS MINUS TIMES DIVIDE
 %token LPAREN RPAREN LCB RCB LSB RSB COMMA SEMI
+%nonassoc RPAREN
+%nonassoc ELSE
 %define parse.trace
 %%
 

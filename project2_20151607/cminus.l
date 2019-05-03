@@ -3,7 +3,7 @@
 #include "globals.h"
 #include "util.h"
 #include "scan.h"
-#include "tiny.tab.h"
+#include "cminus.tab.h"
 char tokenString[MAXTOKENLEN+1];
 %}
 

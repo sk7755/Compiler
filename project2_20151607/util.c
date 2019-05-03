@@ -202,7 +202,7 @@ static void printSpaces(void)
 }
 
 #define PRINT_TYPE(x) fprintf(listing,"Type = %s\n",tokenID[x - NONE]);
-#define PRINT_OP(x) fprintf(listing, "Op:%s\n",tokenID[x - NONE])
+#define PRINT_OP(x) fprintf(listing, "Op : %s\n",tokenID[x - NONE])
 
 void printTree(TreeNode *tree)
 {

@@ -6,12 +6,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifndef YYPARSER
-#include "tiny.tab.h"
-#define ENDFILE 0
-
-#endif
-
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -22,20 +16,24 @@
 
 #define MAXRESERVED 8
 
-#define YYSTYPE TreeNode *
-
-typedef int TokenType;
-
+typedef enum
+	{ENDFILE,ERROR,COMERR,
+	IF,ELSE,INT,RETURN,VOID,WHILE,
+	ID,NUM,
+	ASSIGN,EQ,NEQ,LT,LEQ,GT,GEQ,PLUS,MINUS,TIMES,DIVIDE,
+	LPAREN,RPAREN,LCB,RCB,LSB,RSB,COMMA,SEMI,
+	}TokenType;
 extern FILE* source;
 extern FILE* listing;
 extern FILE* code;
 
 extern int lineno;
 
-//Syntax tree for Parsing
-typedef enum {FuncK, DeclareK,ParamK, StmtK, FactorK, CallK} NodeKind;
-typedef enum {IfK, WhileK, ReturnK, CompoundK, ExpK} StmtKind;
-typedef enum {IdK, ArrK, ConstK} FactorKind;
+typedef enum {StmtK, ExpK} NodeKind;
+typedef enum {IfK, RepeatK, AssignK, ReadK, WriteK} StmtKind;
+typedef enum {OpK, ConstK, IdK} ExpKind;
+
+typedef enum {Void, Integer, Boolean} ExpType;
 
 #define MAXCHILDREN 3
 
@@ -45,13 +43,11 @@ typedef struct treeNode
 	struct treeNode *sibling;
 	int lineno;
 	NodeKind nodekind;
-	union {StmtKind stmt; FactorKind factor;} kind;
-	TokenType op;
-	int val;
-	char *name;
+	union {StmtKind stmt; ExpKind exp;} kind;
+	union {TokenType op; int val; char *name;} attr;
+	ExpType type;
 }TreeNode;
 
-//Flag for tracing
 extern int EchoSource;
 
 extern int TraceScan;

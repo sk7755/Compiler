@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS =
 TARGET = 20151607
-OBJS = lex.yy.o cminus.tab.o util.o main.o
+OBJS = lex.yy.o cminus.tab.o util.o symtab.o analyze.o main.o
 
 $(TARGET) : $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) -lfl
@@ -20,6 +20,12 @@ cminus.tab.c cminus.tab.h : cminus.y
 
 util.o : util.c
 	$(CC) $(CFLAGS) -c -o util.o util.c
+	
+analyze.o : analyze.c
+	$(CC) $(CFLAGS) -c -o analyze.o analyze.c
+
+symtab.o : symtab.c
+	$(CC) $(CFLAGS) -c -o symtab.o symtab.c
 	
 main.o : main.c
 	$(CC) $(CFLAGS) -c -o main.o main.c

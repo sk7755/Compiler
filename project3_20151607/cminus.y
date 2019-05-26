@@ -34,7 +34,7 @@ static int savedNum = 0;
 %start program
 %token NONE ERROR COMERR
 %token IF ELSE RETURN WHILE
-%token INT VOID INTARR
+%token INT VOID INTARR VOIDARR
 %token ID NUM
 %token ASSIGN EQ NEQ LT LEQ GT GEQ
 %token PLUS MINUS TIMES DIVIDE
@@ -63,14 +63,17 @@ declaration			: var_declaration { $$ = $1; }
 					;
 var_declaration		: type_specifier identifier SEMI
 						{	$$ = newDeclareNode();
-							$$->op = (TokenType)(long)$1;
+							$$->dtype = (TokenType)(long)$1;
 							POP_STACK($$->name, $$->lineno);
 
 						}
 					| type_specifier identifier LSB NUM {savedNum = atoi(tokenString);}
 					  RSB SEMI
 						{	$$ = newDeclareNode();
-							$$->op = INTARR;
+							if($1 == (YYSTYPE)INT)
+								$$->dtype = INTARR;
+							else
+								$$->dtype = VOIDARR;
 							$$->val =savedNum;
 							POP_STACK($$->name, $$->lineno);
 						}
@@ -80,7 +83,7 @@ type_specifier		: INT { $$ = (YYSTYPE)INT;}
 					;
 fun_declaration		: type_specifier identifier LPAREN params RPAREN compound_stmt
 						{	$$ = newFuncNode();
-							$$->op = (TokenType)(long)$1;
+							$$->dtype = (TokenType)(long)$1;
 							$$->child[0] = $4;
 							$$->child[1] = $6;
 							POP_STACK($$->name, $$->lineno);
@@ -103,12 +106,15 @@ param_list			: param_list COMMA param
 					;
 param				: type_specifier identifier 
 						{	$$ = newParamNode();
-							$$->op = (TokenType)(long)$1;
+							$$->dtype = (TokenType)(long)$1;
 							POP_STACK($$->name, $$->lineno);
 						}
 					| type_specifier identifier LSB RSB
 						{	$$ = newParamNode();
-							$$->op = INTARR;
+							if($1 == (YYSTYPE)INT)
+								$$->dtype = INTARR;
+							else
+								$$->dtype = VOIDARR;
 							POP_STACK($$->name, $$->lineno);
 						}
 					;

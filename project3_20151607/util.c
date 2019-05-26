@@ -4,7 +4,7 @@
 const char *tokenID[] = {
 	"None", "Error", "CommentError",
 	"If", "Else", "Return", "While",
-	"Int", "Void", "Array",
+	"Int", "Void", "IntArr", "VoidArr",
 	"Id", "Num",
 	"=", "==", "!=", "<", "<=", ">", ">=",
 	"+", "-", "*", "/",
@@ -68,8 +68,10 @@ TreeNode * newFuncNode()
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->op = 0;
+		t->op = NONE;
+		t->dtype = NONE;
 		t->name = NULL;
+		t->function = NULL;
 		t->val = 0;
 		t->nodekind = FuncK;
 		t->lineno = lineno;
@@ -87,8 +89,10 @@ TreeNode * newDeclareNode()
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->op = 0;
+		t->op = NONE;
+		t->dtype = NONE;
 		t->name = NULL;
+		t->function = NULL;
 		t->val = 0;
 		t->nodekind = DeclareK;
 		t->lineno = lineno;
@@ -106,8 +110,10 @@ TreeNode * newParamNode()
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->op = 0;
+		t->op = NONE;
+		t->dtype = NONE;
 		t->name = NULL;
+		t->function = NULL;
 		t->val = 0;
 		t->nodekind = ParamK;
 		t->lineno = lineno;
@@ -125,8 +131,10 @@ TreeNode * newStmtNode(StmtKind kind)
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->op = 0;
+		t->op = NONE;
+		t->dtype = NONE;
 		t->name = NULL;
+		t->function = NULL;
 		t->val = 0;
 		t->nodekind = StmtK;
 		t->kind.stmt = kind;
@@ -145,8 +153,10 @@ TreeNode * newFactorNode(FactorKind kind)
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->op = 0;
+		t->op = NONE;
+		t->dtype = NONE;
 		t->name = NULL;
+		t->function = NULL;
 		t->val = 0;
 		t->nodekind = FactorK;
 		t->kind.factor = kind;
@@ -165,8 +175,10 @@ TreeNode * newCallNode()
 		for (i=0;i<MAXCHILDREN;i++)
 			t->child[i] = NULL;
 		t->sibling = NULL;
-		t->op = 0;
+		t->op = NONE;
+		t->dtype = NONE;
 		t->name = NULL;
+		t->function = NULL;
 		t->val = 0;
 		t->nodekind = CallK;
 		t->lineno = lineno;
@@ -215,7 +227,7 @@ void printTree(TreeNode *tree)
 		if(tree->nodekind == FuncK){
 			fprintf(listing,"Function = %s\n",tree->name);
 			INDENT;
-			printSpaces(); PRINT_TYPE(tree->op);
+			printSpaces(); PRINT_TYPE(tree->dtype);
 			if(!tree->child[0]){
 				printSpaces();
 				fprintf(listing,"Parameter = (null)\n");
@@ -225,15 +237,15 @@ void printTree(TreeNode *tree)
 		else if(tree->nodekind == ParamK){
 			fprintf(listing,"Parameter = %s\n",tree->name);
 			INDENT;
-			printSpaces(); PRINT_TYPE(tree->op);
+			printSpaces(); PRINT_TYPE(tree->dtype);
 			UNINDENT;
 		}
 		else if(tree->nodekind == DeclareK){
 			fprintf(listing,"ID: %s\n",tree->name);
 			if(tree->op != INTARR){
-				printSpaces();PRINT_TYPE(tree->op);}
+				printSpaces();PRINT_TYPE(tree->dtype);}
 			else{
-				printSpaces();fprintf(listing,"Type = %s %d\n",tokenID[tree->op-NONE], tree->val); }
+				printSpaces();fprintf(listing,"Type = %s %d\n",tokenID[tree->dtype-NONE], tree->val); }
 		}
 		else if(tree->nodekind == CallK){
 			fprintf(listing,"Call procedure = %s\n",tree->name);

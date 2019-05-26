@@ -1,7 +1,7 @@
 #include "globals.h"
 #define NO_PARSE FALSE
 
-#define NO_ANALYZE TRUE
+#define NO_ANALYZE FALSE
 
 #define NO_CODE TRUE
 
@@ -25,7 +25,7 @@ FILE *code;
 
 int EchoSource = TRUE;
 int TraceScan = FALSE;
-int TraceParse = TRUE;
+int TraceParse = FALSE;
 int TraceAnalyze = TRUE;
 int TraceCode = TRUE;
 

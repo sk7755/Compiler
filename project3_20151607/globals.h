@@ -43,10 +43,12 @@ typedef struct treeNode
 {
 	struct treeNode *child[MAXCHILDREN];
 	struct treeNode *sibling;
+	struct treeNode *function;
 	int lineno;
 	NodeKind nodekind;
 	union {StmtKind stmt; FactorKind factor;} kind;
 	TokenType op;
+	TokenType dtype;
 	int val;
 	char *name;
 }TreeNode;

@@ -21,7 +21,8 @@ const char *ErrorMessage[] = {
 	"Type of return expression is not matched to declaration",		//RETURN_TYPE
 	"Main function must be declared with return void type",			//MAIN_RETURN
 	"Main function must be declared with void parameter",			//MAIN_PARAM
-	"Main function must be declared as the last function"			//MAIN_DECL
+	"Main function must be declared as the last function",			//MAIN_DECL
+	"Int return function must contain return statement"				//NONE_RET
 };
 
 
@@ -217,12 +218,6 @@ buildSymtab(TreeNode* syntaxTree)
 {
 	init_scope();
 	traverse(syntaxTree, insertNode, get_out_of_scope);
-	if (TraceAnalyze)
-	{
-		fprintf(listing, 
-			"\n****************************** Symbol table ******************************");
-		printSymTab(listing);
-	}
 }
 
 
@@ -243,6 +238,7 @@ checkNode(TreeNode* t)
 	TreeNode *func;
 	TreeNode *call_param;
 	TreeNode *func_param;
+	static int ret_count = 0;
 	switch(t->nodekind){
 		case StmtK:
 			switch(t->kind.stmt){
@@ -263,8 +259,11 @@ checkNode(TreeNode* t)
 						t->dtype = INT;
 					break;
 				case ReturnK:
+					if(t->child[0] == NULL)
+						printError(t, RETURN_TYPE);
 					if(t->child[0]->dtype != INT)
 						printError(t->child[0], RETURN_TYPE);
+					ret_count++;
 					break;
 				default:
 					break;
@@ -310,6 +309,10 @@ checkNode(TreeNode* t)
 				if(t->child[0] != NULL)				//not void parameter
 					printError(t,MAIN_PARAM);
 			}
+			if(t->dtype == INT && ret_count == 0)	//none return
+				printError(t,NONE_RET);
+			else
+				ret_count = 0;
 			break;
 		default:
 			break;

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS =
-TARGET = project3_3
+TARGET = project3_5
 OBJS = lex.yy.o cminus.tab.o util.o symtab.o analyze.o main.o
 
 $(TARGET) : $(OBJS)
@@ -31,5 +31,5 @@ main.o : main.c
 	$(CC) $(CFLAGS) -c -o main.o main.c
 
 clean :
-	rm lex.yy.c cminus.tab.c cminus.tab.h *.o project3_3
+	rm lex.yy.c cminus.tab.c cminus.tab.h *.o project3_5
 

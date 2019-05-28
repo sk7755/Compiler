@@ -9,8 +9,9 @@ const char *ErrorMessage[] = {
 	"This function is not declared",					//NON_DECL_FUNC
 	"This variable is re-declared",						//RE_DECL_VAR
 	"This function is re-declared",						//RE_DECL_FUNC
-	"Can not declare void type variable",					//VOID_DECL
+	"Can not declare void type variable",				//VOID_DECL
 	"This variable is not array type",					//NOT_ARR
+	"The variable can not be function",					//NOT_ID
 	"This call procedure is not decalred to be function",			//NOT_FUNC
 	"Void return function can not have return statement",			//VOID_RETURN
 	"Type in expression must be integer",					//EXP_TYPE
@@ -151,8 +152,10 @@ insertNode(TreeNode* t)
 						printError(t, NON_DECL_VAR);
 					Scope* referenced_scope = get_scope_by_name(t->name);
 					TreeNode* referenced_node = get_node_by_name(t->name);
-					t->dtype = referenced_node->dtype;
-					
+					if(referenced_node->nodekind != FuncK)
+						t->dtype = referenced_node->dtype;
+					else
+						printError(t,NOT_ID);
 					st_insert_lineno(t);
 				}
 					break;
@@ -218,6 +221,13 @@ buildSymtab(TreeNode* syntaxTree)
 {
 	init_scope();
 	traverse(syntaxTree, insertNode, get_out_of_scope);
+	if (TraceAnalyze)
+	{
+		//fprintf(listing, 
+		//	"\n****************************** Symbol table ******************************");
+		printSymTab(listing);
+	}
+
 }
 
 

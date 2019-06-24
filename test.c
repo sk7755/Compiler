@@ -1,5 +1,5 @@
 void func(void){;}
 
-void main(void){
-	func = 1;
+void funcs(void){
+	;
 }

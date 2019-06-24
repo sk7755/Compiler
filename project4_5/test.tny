@@ -28,8 +28,8 @@ int func(int paramA, int paramB[]){
 	return ret;
 }
 
-int globArr[200];
-int globBrr[100];
+/*int globArr[200];*/
+/*int globBrr[100];*/
 
 void main(void)
 {

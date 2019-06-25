@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "symtab.h"
 #include "analyze.h"
-
+#include "util.h"
 
 //Error Message
 const char *ErrorMessage[] = {
@@ -111,8 +111,8 @@ insertNode(TreeNode* t)
 					}
 					else
 					{
-						global_sp += INT_SIZE;
 						st_insert(t, global_sp, 1);
+						global_sp += INT_SIZE;
 					}
 				}
 				else if (t->dtype == INTARR)
@@ -124,8 +124,8 @@ insertNode(TreeNode* t)
 					}
 					else
 					{
-						global_sp += INT_SIZE * t->val;
 						st_insert(t, global_sp, 1);
+						global_sp += INT_SIZE * t->val;
 					}
 				}
 				else if (t->dtype == VOID)
@@ -220,7 +220,23 @@ void
 buildSymtab(TreeNode* syntaxTree)
 {
 	init_scope();
+	TreeNode *ot,*it;
+	ot = newFuncNode();
+	ot->dtype = VOID;
+	ot->name = (char*)malloc(sizeof(char) * 10);
+	ot->child[0] = newParamNode();
+	ot->child[0]->dtype = INT;
+	strcpy(ot->name,"output");
+	st_insert(ot,0,1);
+
+	it = newFuncNode();
+	it->dtype = INT;
+	it->name = (char*)malloc(sizeof(char) * 10);
+	strcpy(it->name, "input");
+	st_insert(it,0,1);
+
 	traverse(syntaxTree, insertNode, get_out_of_scope);
+
 	if (TraceAnalyze)
 	{
 		//fprintf(listing, 

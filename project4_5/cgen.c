@@ -5,15 +5,30 @@
 static int used_label= -1;
 static int parameter_size;
 #define LABEL_LEN 10
+#define STATIC_AREA 0x10000000
 static void genLabel(char *lab_name){
 	sprintf(lab_name, "label%d",++used_label);
 }
 
-void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
+void genCode(TreeNode* tree, FILE* codeFile)
+{
+	fprintf(codeFile,"############### Data segment ###############\n");
+	fprintf(codeFile,".data\n");
+	fprintf(codeFile, "newline: .asciiz \"\\n\"\n");
+	fprintf(codeFile, "input_prompt: .asciiz \"Enter value for IN instruction : \"\n");
+	fprintf(codeFile, "output_prompt: .asciiz \"OUT instruction prints : \"\n");
+
+	fprintf(codeFile,"############### Code segment ###############\n");
+	fprintf(codeFile,".text\n");
+	cGen(tree, 0, codeFile);	
+}
+
+
+void cGen(TreeNode *tree, int isAddr, FILE *codeFile)
 {
 	if(tree == NULL)
 		return;
-	
+
 	char lab1[LABEL_LEN];
 	char lab2[LABEL_LEN];
 	TreeNode *p;
@@ -24,20 +39,29 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 			switch(tree->kind.factor){
 				case IdK:
 					fprintf(codeFile,"#IdK %s\n",tree->name);
-					if(isAddr || tree->op == INTARR){
+					if(isAddr || tree->dtype == INTARR){
 						fprintf(codeFile,"addi $sp, $sp, -4\n");
 						if(tree->symbol->isGlobal){
-							fprintf(codeFile,"addi $v0, $zero, %d\n",tree->symbol->loc.mem_loc);
+							fprintf(codeFile,"addi $v1, $zero, 1\n");
+							fprintf(codeFile,"sllv $v1, $v1, 28\n");
+							fprintf(codeFile,"addi $v0, $v1, %d\n",tree->symbol->loc.mem_loc);
 							fprintf(codeFile,"sw $v0, 0($sp)\n");
 						}
-						else{
-							fprintf(codeFile,"addi $v0, $fp, %d\n",tree->symbol->loc.func_loc);
+						else{	
+							if(tree->dtype == INTARR && tree->symbol->node->nodekind == ParamK)	//parameter
+								fprintf(codeFile, "lw $v0, %d($fp)\n",tree->symbol->loc.func_loc);
+							
+							else	//local variable
+								fprintf(codeFile,"addi $v0, $fp, %d\n",tree->symbol->loc.func_loc);
 							fprintf(codeFile,"sw $v0, 0($sp)\n");
 						}
 					}
 					else{
-						if(tree->symbol->isGlobal)
-							fprintf(codeFile,"lw $v0, %d\n", tree->symbol->loc.mem_loc);
+						if(tree->symbol->isGlobal){
+							fprintf(codeFile,"addi $v1, $zero, 1\n");
+							fprintf(codeFile,"sllv $v1, $v1, 28\n");
+							fprintf(codeFile,"lw $v0, %d($v1)\n", tree->symbol->loc.mem_loc);
+						}
 						else
 							fprintf(codeFile,"lw $v0, %d($fp)\n", tree->symbol->loc.func_loc);
 						fprintf(codeFile,"addi $sp, $sp, -4\n");
@@ -46,17 +70,30 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 					break;
 				case ArrK:
 					fprintf(codeFile,"#ArrK %s[]\n",tree->name);
-					genCode(tree->child[0], 0, codeFile);
+					cGen(tree->child[0], 0, codeFile);
 					fprintf(codeFile,"lw $v0, 0($sp)\n");
+					fprintf(codeFile,"addi $sp, $sp, 4\n");
 					fprintf(codeFile,"li $v1, 4\n");
 					fprintf(codeFile,"mul $v0, $v0, $v1\n");
-					if(tree->symbol->isGlobal)
-						fprintf(codeFile,"addi, $v0, $v0, %d\n",tree->symbol->loc.mem_loc);
-					else{
-						fprintf(codeFile,"add, $v0, $v0, $fp\n");
-						fprintf(codeFile,"addi, $v0, $v0, %d\n",tree->symbol->loc.func_loc);
+					if(tree->symbol->isGlobal){
+						fprintf(codeFile,"addi $v1, $zero, 1\n");
+						fprintf(codeFile,"sllv $v1, $v1, 28\n");
+						fprintf(codeFile,"add $v0, $v0, $v1\n");
+						fprintf(codeFile,"addi $v0, $v0, %d\n",tree->symbol->loc.mem_loc);
 					}
-					fprintf(codeFile,"lw $v0, 0($v0)\n");
+					else{
+						if(tree->symbol->node->nodekind == ParamK){
+							fprintf(codeFile,"lw $v1 %d($fp)\n",tree->symbol->loc.func_loc);
+							fprintf(codeFile,"add $v0, $v0, $v1\n");
+						}
+						else{
+							fprintf(codeFile,"add $v0, $v0, $fp\n");
+							fprintf(codeFile,"addi $v0, $v0, %d\n",tree->symbol->loc.func_loc);
+						}
+					}
+					if(!isAddr)
+						fprintf(codeFile,"lw $v0, 0($v0)\n");
+					fprintf(codeFile,"addi $sp, $sp, -4\n");
 					fprintf(codeFile,"sw $v0, 0($sp)\n");
 					break;
 				case ConstK:
@@ -71,13 +108,13 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 			switch(tree->kind.stmt){
 				case IfK:
 					fprintf(codeFile,"#IfK condition\n");
-					genCode(tree->child[0],0,codeFile);
+					cGen(tree->child[0],0,codeFile);
 					fprintf(codeFile,"lw $v0, 0($sp)\n");
 					fprintf(codeFile,"addi $sp, $sp, 4\n");
 					genLabel(lab1);
 					fprintf(codeFile,"beq $v0, $zero, %s\n",lab1);
 					fprintf(codeFile,"#IfK then\n");
-					genCode(tree->child[1],0,codeFile);
+					cGen(tree->child[1],0,codeFile);
 
 					if(tree->child[2]){				//else part
 						genLabel(lab2);
@@ -86,7 +123,7 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 					fprintf(codeFile,"%s:\n",lab1);
 					if(tree->child[2]){
 						fprintf(codeFile,"#IfK else\n");
-						genCode(tree->child[2], 0, codeFile);
+						cGen(tree->child[2], 0, codeFile);
 						fprintf(codeFile,"%s:\n",lab2);
 					}
 					break;
@@ -95,18 +132,18 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 					genLabel(lab2);
 					fprintf(codeFile,"%s:\n",lab1);
 					fprintf(codeFile,"#WhileK condition\n");
-					genCode(tree->child[0], 0, codeFile);
+					cGen(tree->child[0], 0, codeFile);
 					fprintf(codeFile,"lw $v0, 0($sp)\n");
 					fprintf(codeFile,"addi $sp, $sp, 4\n");
 					fprintf(codeFile,"beq $v0, $zero, %s\n",lab2);
 					fprintf(codeFile,"#WhileK statement\n");
-					genCode(tree->child[1], 0, codeFile);
+					cGen(tree->child[1], 0, codeFile);
 					fprintf(codeFile,"beq $zero, $zero, %s\n",lab1);
 					fprintf(codeFile,"%s:\n",lab2);
 					break;
 				case ReturnK:
 					fprintf(codeFile,"#ReturnK computation\n");
-					genCode(tree->child[0], 0, codeFile);
+					cGen(tree->child[0], 0, codeFile);
 					fprintf(codeFile,"#ReturnK return seq\n");
 					fprintf(codeFile,"lw $t0, 0($sp)\n");
 					fprintf(codeFile,"addi $sp, $fp, 0\n");
@@ -117,22 +154,23 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 					break;
 				case CompoundK:
 					fprintf(codeFile,"#CompoundK Declarations\n");
-					genCode(tree->child[0],0,codeFile);
+					cGen(tree->child[0],0,codeFile);
 					fprintf(codeFile,"#CompoundK Statements\n");
-					genCode(tree->child[1],0, codeFile);
+					cGen(tree->child[1],0, codeFile);
 					break;
 				case ExpK:
 					left_isAddr = 0;
 					if(tree->op == ASSIGN)
 						left_isAddr = 1;
-					fprintf(codeFile,"#ExpK lefthand\n");
-					genCode(tree->child[0],left_isAddr,codeFile);
+
 					fprintf(codeFile,"#ExpK righthand\n");
-					genCode(tree->child[1],0,codeFile);
+					cGen(tree->child[1],0,codeFile);
+					fprintf(codeFile,"#ExpK lefthand\n");
+					cGen(tree->child[0],left_isAddr,codeFile);
 
 					fprintf(codeFile,"#ExpK operation\n");
-					fprintf(codeFile,"lw $v1, 0($sp)\n");	//righthand side
-					fprintf(codeFile,"lw $v0, 4($sp)\n");	//lefthand side
+					fprintf(codeFile,"lw $v1, 4($sp)\n");	//righthand side
+					fprintf(codeFile,"lw $v0, 0($sp)\n");	//lefthand side
 					fprintf(codeFile,"addi $sp, $sp, 8\n");
 
 					switch(tree->op){
@@ -207,7 +245,7 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 			}	
 			break;
 		case DeclareK:
-			switch(tree->op){
+			switch(tree->dtype){
 				case INT:
 					fprintf(codeFile,"#DeclareK INT\n");
 					if(tree->symbol->isGlobal)
@@ -232,10 +270,10 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 			fprintf(codeFile,"sw $ra, 0($sp)\n");
 			fprintf(codeFile,"#FuncK Parameter\n");	
 			parameter_size = 0;
-			genCode(tree->child[0], 0, codeFile);
+			cGen(tree->child[0], 0, codeFile);
 
 			fprintf(codeFile,"#FuncK Statements\n");
-			genCode(tree->child[1], 0, codeFile);
+			cGen(tree->child[1], 0, codeFile);
 
 			fprintf(codeFile,"#FuncK Void Return\n");
 			fprintf(codeFile, "lw $ra, -4($fp)\n");
@@ -247,23 +285,60 @@ void genCode(TreeNode *tree, int isAddr, FILE *codeFile)
 			break;
 		case ParamK:
 			fprintf(codeFile,"#ParamK %s\n",tree->name);
-			if(tree->op == INT || tree->op == INTARR)
+			if(tree->dtype == INT || tree->dtype == INTARR)
 				parameter_size += 4;
 			break;
 		case CallK:
-			fprintf(codeFile,"#CallK Argument Computation\n");
-			genCode(tree->child[0],0,codeFile);
-			fprintf(codeFile,"#CallK Call Sequence\n");
-			fprintf(codeFile,"addi $sp, $sp, -4\n");
-			fprintf(codeFile,"sw $fp, 0($sp)\n");
-			fprintf(codeFile,"jal %s\n",tree->name);
-			if(tree->op != VOID){
+			if (strcmp(tree->name,"input") == 0){
+				// print input prompt
+				fprintf(codeFile, "#input prompt\n");
+				fprintf(codeFile, "li $v0, 4\n");
+				fprintf(codeFile, "la $a0, input_prompt\n");
+				fprintf(codeFile, "syscall\n");
+
+				// read_int
+				fprintf(codeFile, "#read int\n");
+				fprintf(codeFile, "li $v0, 5\n");
+				fprintf(codeFile, "syscall\n");
+				fprintf(codeFile, "addi $sp, $sp, -4\n");
+				fprintf(codeFile, "sw $v0, 0($sp)\n");
+			}
+			else if (strcmp(tree->name, "output") == 0){
+				// print output prompt
+				cGen(tree->child[0],0,codeFile);
+				fprintf(codeFile, "#output prompt\n");
+				fprintf(codeFile, "li $v0, 4\n");
+				fprintf(codeFile, "la $a0, output_prompt\n");
+				fprintf(codeFile, "syscall\n");
+				fprintf(codeFile, "\n");
+
+				// print value
+				fprintf(codeFile, "#print int\n");
+				fprintf(codeFile, "lw $a0, 0($sp)\n");
+				fprintf(codeFile, "addi $sp, $sp, 4\n");
+				fprintf(codeFile, "li $v0, 1\n");
+				fprintf(codeFile, "syscall\n");
+
+				// print newline
+				fprintf(codeFile, "li $v0, 4\n");
+				fprintf(codeFile, "la $a0, newline\n");
+				fprintf(codeFile, "syscall\n");
+			}
+			else{
+				fprintf(codeFile,"#CallK Argument Computation\n");
+				cGen(tree->child[0],0,codeFile);
+				fprintf(codeFile,"#CallK Call Sequence\n");
 				fprintf(codeFile,"addi $sp, $sp, -4\n");
-				fprintf(codeFile,"sw $t0, 0($sp)\n");
+				fprintf(codeFile,"sw $fp, 0($sp)\n");
+				fprintf(codeFile,"jal %s\n",tree->name);
+				if(tree->dtype != VOID){
+					fprintf(codeFile,"addi $sp, $sp, -4\n");
+					fprintf(codeFile,"sw $t0, 0($sp)\n");
+				}
 			}
 			break;
 	}
 	if(tree->sibling){
-		genCode(tree->sibling,0,codeFile);
+		cGen(tree->sibling,0,codeFile);
 	}
 }

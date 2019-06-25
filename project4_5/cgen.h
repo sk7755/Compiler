@@ -11,6 +11,7 @@ typedef enum REG{
 	gp,sp,fp,ra
 };
 */
-void genCode(TreeNode * syntaxTree, int isAddr,FILE * codefile);
+void genCode(TreeNode* tree, FILE* codeFile);
+void cGen(TreeNode * syntaxTree, int isAddr,FILE * codefile);
 
 #endif

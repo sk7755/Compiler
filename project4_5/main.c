@@ -86,7 +86,7 @@ int main( int argc, char *argv[])
 			printf("Unable to open %s\n",codefile);
 			exit(1);
 		}
-		genCode(syntaxTree,0, code);
+		genCode(syntaxTree, code);
 		fclose(code);
 	}
 #endif

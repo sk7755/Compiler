@@ -1,5 +1,8 @@
 void main(void){
-	int a;
-
-	a= 3+4;
+	int i;
+	if(1){
+		int i;
+		i = 3;
+		output(i);
+	}
 }

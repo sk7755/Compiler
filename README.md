@@ -1,4 +1,4 @@
-make : compiler all source codes
+make : compile all source codes \n
 make clean : clean all object and executable files
 
 if you want to parse Cminus code,
